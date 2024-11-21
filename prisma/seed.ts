@@ -1,20 +1,50 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { faker } from "@faker-js/faker";
 import { PrismaClient } from "@prisma/client";
 
 export const prisma = new PrismaClient();
 
+async function generateSeeds(userCount: number) {
+  for (let i = 0; i < userCount; i++) {
+    const userName = faker.name.firstName(); // Случайное имя пользователя
+
+    const user = await prisma.user.create({
+      data: {
+        login: userName,
+        passwordHash: crypto.randomUUID(), // Генерация случайного пароля
+        rating: 1000, // Пример начального рейтинга
+      },
+    });
+
+    await prisma.game.create({
+      data: {
+        status: "IDLE",
+        players: {
+          connect: [{ id: user.id }],
+        },
+      },
+    });
+  }
+}
+
 async function main() {
-  const game1 = prisma.game.create({
+
+  const user_1 = await prisma.user.create({
     data: {
-      name: "game-1",
-    },
-  });
-  const game2 = prisma.game.create({
-    data: {
-      name: "game-2",
+      login: faker.internet.username(),
+      passwordHash: faker.internet.password({ length: 10 }),
+      rating: faker.number.int({max: 1000}),
     },
   });
 
-  await Promise.all([game1, game2]);
+  const user_2 = await prisma.user.create({
+    data: {
+      login: faker.internet.username(),
+      passwordHash: faker.internet.password({ length: 10 }),
+      rating: faker.number.int({max: 1000}),
+    },
+  });
+
 }
 main()
   .then(async () => {
