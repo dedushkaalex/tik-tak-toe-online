@@ -1,23 +1,24 @@
+import { GameId, UserId } from '@/kernel/ids';
 import { TNullable } from '@/shared/lib/types';
 
 export type GameStatusEntity = GameEntity["status"];
 export type GameEntity = GameIdleEntity | GameInProgressEntity | GameOverEntity | GameOverDrawEntity;
 
 export type GameIdleEntity = {
-  id: string;
+  id: GameId;
   creator: PlayerEntity;
   status: "idle";
 };
 
 export type GameInProgressEntity = {
-  id: string;
+  id: GameId;
   players: PlayerEntity[];
   field: Field;
   status: "in-progress";
 };
 
 export type GameOverEntity = {
-  id: string;
+  id: GameId;
   players: PlayerEntity[];
   field: Field;
   status: "game-over";
@@ -25,14 +26,14 @@ export type GameOverEntity = {
 };
 
 export type GameOverDrawEntity = {
-  id: string;
+  id: GameId;
   players: PlayerEntity[];
   field: Field;
   status: "game-over-draw";
 };
 
 export type PlayerEntity = {
-  id: string;
+  id: UserId;
   login: string;
   rating: number;
 };

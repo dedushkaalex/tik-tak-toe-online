@@ -7,12 +7,12 @@
  * Серверные экшены не поддерживают throw Error, поэтому через юнионы
  */
 
-type Left<L> = {
+export type Left<L> = {
   type: "left";
   error: L;
 };
 
-type Right<R> = {
+export type Right<R> = {
   type: "right";
   value: R;
 };
