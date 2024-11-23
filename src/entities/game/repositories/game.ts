@@ -63,6 +63,7 @@ function dbGameToGameEntity(
         creator,
         id: game.id,
         status: "idle",
+        field: fieldSchema.parse(game.field),
       } satisfies GameIdleEntity;
     case "GAME_OVER":
       if (!game.winner) {
