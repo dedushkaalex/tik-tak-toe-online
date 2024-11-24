@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
-export function useEventsSource<T>(url: string, defaultData: T) {
-  const [data, setData] = useState<T>(defaultData);
+export function useEventsSource<T>(url: string) {
+  const [isPending, setIsPending] = useState(true);
+  const [data, setData] = useState<T>();
   const [error, setError] = useState<unknown | undefined>();
 
   useEffect(() => {
@@ -9,7 +10,9 @@ export function useEventsSource<T>(url: string, defaultData: T) {
 
     gameEvents.addEventListener("message", (message) => {
       try {
+        setIsPending(false);
         setData(JSON.parse(message.data));
+        setError(undefined);
       } catch (e) {
         setError(e);
       }
@@ -25,5 +28,6 @@ export function useEventsSource<T>(url: string, defaultData: T) {
   return {
     dataStream: data,
     errorStream: error,
+    isPending,
   };
 }

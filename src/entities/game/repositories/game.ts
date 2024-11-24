@@ -1,41 +1,71 @@
 import * as z from "zod";
-import { Game, GameStatus, Prisma, User } from "@prisma/client";
+import { Game, GamePlayer, GameStatus, Prisma, User } from "@prisma/client";
 
 import { prisma } from "@/shared/lib/db";
-import { removePassword } from "@/shared/lib/password";
 import { TNullable } from "@/shared/lib/types";
 
-import { GameEntity, GameIdleEntity, GameInProgressEntity, GameOverDrawEntity, GameStatusEntity } from "../domain";
+import { GameId } from "@/kernel/ids";
+
+import {
+  GameEntity,
+  GameIdleEntity,
+  GameInProgressEntity,
+  GameOverDrawEntity,
+  GameStatusEntity,
+  PlayerEntity,
+} from "../domain";
+
+const gameInclude = {
+  winner: {
+    include: {
+      user: true,
+    },
+  },
+  players: {
+    include: {
+      user: true,
+    },
+  },
+};
 
 async function gamesList(where?: Prisma.GameWhereInput): Promise<GameEntity[]> {
   // include подгрузит relation связи
 
   const games = await prisma.game.findMany({
     where,
-    include: {
-      winner: true,
-      players: true,
-    },
+    include: gameInclude,
   });
 
   return games.map(dbGameToGameEntity);
+}
+
+export async function getGame(where?: Prisma.GameWhereInput) {
+  const game = await prisma.game.findFirst({
+    where,
+    include: gameInclude,
+  });
+
+  if (game) {
+    return dbGameToGameEntity(game);
+  }
+
+  return undefined;
 }
 
 export async function createGame(game: GameIdleEntity): Promise<GameEntity> {
   const createdGame = await prisma.game.create({
     data: {
       id: game.id,
-      field: Array(9).fill(null),
+      field: game.field,
       players: {
-        connect: [{ id: game.creator.id }],
+        create: {
+          index: 0,
+          userId: game.creator.id,
+        },
       },
       status: gameStatusEntityToDbGameStatus(game.status),
     },
-    include: {
-      players: true,
-      winner: true,
-    }
-    
+    include: gameInclude,
   });
 
   return dbGameToGameEntity(createdGame);
@@ -45,11 +75,11 @@ const fieldSchema = z.array(z.union([z.string(), z.null()]));
 
 function dbGameToGameEntity(
   game: Game & {
-    players: User[];
-    winner?: TNullable<User>;
+    players: Array<GamePlayer & { user: User }>;
+    winner?: TNullable<GamePlayer & { user: User }>;
   },
 ): GameEntity {
-  const players = game.players.map(removePassword);
+  const players = game.players.sort((a, b) => a.index - b.index).map(dbPlayerToPlayer);
 
   switch (game.status) {
     case "IDLE":
@@ -60,7 +90,7 @@ function dbGameToGameEntity(
       }
 
       return {
-        creator,
+        creator: creator,
         id: game.id,
         status: "idle",
         field: fieldSchema.parse(game.field),
@@ -75,7 +105,7 @@ function dbGameToGameEntity(
         players: players,
         field: fieldSchema.parse(game.field),
         status: "game-over",
-        winner: removePassword(game.winner),
+        winner: dbPlayerToPlayer(game.winner),
       };
     case "GAME_OVER_DRAW":
       return {
@@ -94,6 +124,24 @@ function dbGameToGameEntity(
   }
 }
 
+async function startGame(gameId: GameId, player: PlayerEntity) {
+  return dbGameToGameEntity(
+    await prisma.game.update({
+      where: { id: gameId },
+      data: {
+        players: {
+          create: {
+            index: 1,
+            userId: player.id,
+          },
+        },
+        status: "IN_PROGRESS",
+      },
+
+      include: gameInclude,
+    }),
+  );
+}
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function gameStatusEntityToDbGameStatus(status: GameStatusEntity): GameStatus {
   switch (status) {
@@ -108,7 +156,16 @@ function gameStatusEntityToDbGameStatus(status: GameStatusEntity): GameStatus {
   }
 }
 
+export const dbPlayerToPlayer = (dbPlayer: GamePlayer & { user: User }): PlayerEntity => {
+  return {
+    id: dbPlayer.user.id,
+    login: dbPlayer.user.login,
+    rating: dbPlayer.user.rating,
+  };
+};
 export const gameRepository = {
   gamesList,
-  createGame
+  createGame,
+  getGame,
+  startGame,
 };

@@ -11,7 +11,21 @@ services:
     volumes:
       - main-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  rabbitmq:
+    image: rabbitmq
+    command: sh -c "rabbitmq-plugins enable rabbitmq_management && rabbitmq-server"
+    ports:
+      - 5672:5672
+      - 15672:15672
+    expose:
+      - "5672"
+      - "15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl", "status"]
       interval: 5s
       timeout: 5s
       retries: 5

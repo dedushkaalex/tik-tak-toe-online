@@ -29,21 +29,21 @@ async function generateSeeds(userCount: number) {
 
 async function main() {
 
-  const user_1 = await prisma.user.create({
-    data: {
-      login: faker.internet.username(),
-      passwordHash: faker.internet.password({ length: 10 }),
-      rating: faker.number.int({max: 1000}),
-    },
-  });
+  // const user_1 = await prisma.user.create({
+  //   data: {
+  //     login: faker.internet.username(),
+  //     passwordHash: faker.internet.password({ length: 10 }),
+  //     rating: faker.number.int({max: 1000}),
+  //   },
+  // });
 
-  const user_2 = await prisma.user.create({
-    data: {
-      login: faker.internet.username(),
-      passwordHash: faker.internet.password({ length: 10 }),
-      rating: faker.number.int({max: 1000}),
-    },
-  });
+  // const user_2 = await prisma.user.create({
+  //   data: {
+  //     login: faker.internet.username(),
+  //     passwordHash: faker.internet.password({ length: 10 }),
+  //     rating: faker.number.int({max: 1000}),
+  //   },
+  // });
 
 }
 main()

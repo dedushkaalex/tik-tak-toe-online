@@ -9,6 +9,7 @@ import { AuthSubmitButton } from "@/features/auth/ui/AuthSubmitButton";
 import { ErrorMsg } from "@/features/auth/ui/ErrorMsg";
 
 import { SignUpFormState, signUpAction } from "../actions/sign-up";
+import { routes } from '@/kernel/routes';
 
 export const SignUpForm = () => {
   const [formState, action, isPending] = useActionState(signUpAction, {} as SignUpFormState);
@@ -19,7 +20,7 @@ export const SignUpForm = () => {
       description={"Для того, чтобы играть - создайте аккаунт"}
       fields={<AuthFields {...formState}/>}
       actions={<AuthSubmitButton disabled={isPending}>Зарегистрироваться</AuthSubmitButton>}
-      link={<AuthFormLink href="/sign-in" linkText="Войдите" text="Уже есть аккаунт?" />}
+      link={<AuthFormLink href={routes.signIn()} linkText="Войдите" text="Уже есть аккаунт?" />}
       error={<ErrorMsg error={formState.errors?._errors} />}
       action={action}
     />

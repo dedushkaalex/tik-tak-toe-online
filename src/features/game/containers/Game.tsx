@@ -1,35 +1,30 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEventsSource } from "@/shared/lib/sse/client";
-
-import { GameEntity } from "@/entities/game/domain";
+import { getGameById, startGame } from "@/entities/game/server";
+import { getCurrentUser } from "@/entities/user/server";
 
 import { GameId } from "@/kernel/ids";
 
-import { GameField } from "../ui/GameField";
-import { GameLayout } from "../ui/GameLayout";
-import { GamePlayers } from "../ui/GamePlayers";
-import { GameStatus } from "../ui/GameStatus";
+import { gameEvents } from "../services/game-events";
+import { GameClient } from "./GameClient";
 
-export function Game({ gameId }: { gameId: GameId }) {
-  const { dataStream, errorStream } = useEventsSource<any>(`/game/${gameId}/stream`, 1);
+export async function Game({ gameId }: { gameId: GameId }) {
+  const user = await getCurrentUser();
 
-  const game: GameEntity = {
-    id: "1",
-    creator: {
-      id: "1",
-      login: "test",
-      rating: 1000,
-    },
-    status: "idle",
-    field: [null, null, null, "O", "X", null, null, null, null],
-  };
-  return <div>{dataStream}</div>;
-  return (
-    <GameLayout
-      players={<GamePlayers game={game} />}
-      status={<GameStatus game={game} />}
-      field={<GameField game={game} />}
-    />
-  );
+  let game = await getGameById(gameId);
+
+  if (!game) {
+    redirect("/");
+  }
+
+  if (user) {
+    const startGameResult = await startGame(gameId, user);
+
+    if (startGameResult.type === "right") {
+      game = startGameResult.value;
+      gameEvents.emit(startGameResult.value);
+    }
+  }
+
+  return <GameClient defaultGame={game} />;
 }

@@ -37,6 +37,7 @@ export const AuthFields = ({
           id={passwordId}
           name="password"
           placeholder="Введите пароль"
+          type='password'
           required
           defaultValue={formData?.get("password")?.toString()}
         />
